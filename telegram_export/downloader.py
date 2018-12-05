@@ -80,7 +80,8 @@ class Downloader:
         """
         Checks whether the given MessageMedia should be downloaded or not.
         """
-        if not media or not self.max_size:
+        # It is needed to chek the size with the max_size defined in config file
+        if not media or media.document.size > self.max_size:
             return False
         if not self.types:
             return True
