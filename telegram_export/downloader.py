@@ -79,19 +79,19 @@ class Downloader:
         """
         Checks whether the given MessageMedia should be downloaded or not.
         """
-        # It is needed to chek the size with the max_size defined in config file
-
         if not media or not self.max_size:
             return False
 
         if not self.types:
             return True
+
         _, size = export_utils.get_file_location(media)
         if export_utils.get_media_type(media) in self.types:
             if size and size > self.max_size:
                 return False
             else:
                 return True
+
         return False
 
     def _dump_full_entity(self, entity):
@@ -229,12 +229,11 @@ class Downloader:
             'SELECT LocalID, VolumeID, Secret, Type, MimeType, Name, Size '
             'FROM Media WHERE ID = ?', (media_id,)
         ).fetchone()
-        # Check the file with self.max_size to make sure user defined limit will be applied
+
         file_size =  media_row[6]
-        if file_size is None:
+        if file_size is None or file_size > self.max_size:
             return
-        if file_size > self.max_size:
-            return
+
         # Documents have attributes and they're saved under the "document"
         # namespace so we need to split it before actually comparing.
         media_type = media_row[3].split('.')
@@ -267,11 +266,10 @@ class Downloader:
         # Detect a sensible extension from the known mimetype.
         if not ext:
             ext = export_utils.get_extension(media_row[4])
-        """
-        just to get sure there is no restricted character in the filename such as :<>
-        """
+
         if isinstance(filename, str):
             filename = export_utils.format_filename(filename)
+
         # Apply the date to the user format string and then replace the map
         formatter['filename'] = filename
         filename = date.strftime(self.media_fmt).format_map(formatter)
